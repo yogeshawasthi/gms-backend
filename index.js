@@ -1,18 +1,14 @@
 const express = require('express');
 const app = express();
 
-
-const PORT =4000;
-
+const PORT = 4000;
 
 require('./DBConn/conn.js');
 
-app.get('/', (req, res) => {
-  res.send({"message": "congrats your server is running on port 4000 successfully"});
-})
+const GymRoutes = require('./Routes/gym'); // Fixed the missing closing quote
 
+app.use('/auth', GymRoutes);
 
 app.listen(PORT, () => {
-    console.log("Server is running on Port 4000")
-
-    })
+    console.log("Server is running on Port 4000");
+});
