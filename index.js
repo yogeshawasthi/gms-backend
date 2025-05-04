@@ -8,7 +8,8 @@ require('./DBConn/conn.js');
 const GymRoutes = require('./Routes/gym');
 const MembershipRoutes = require('./Routes/membership');
 
-app.use(express.json()); // Middleware to parse JSON requests
+app.use(express.json()); // This is required to parse JSON data in req.body
+
 app.use('/auth', GymRoutes);
 app.use('/plans', MembershipRoutes);
 
