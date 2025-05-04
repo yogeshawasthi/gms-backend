@@ -1,9 +1,11 @@
 const Gym = require('../Modals/gym.js');
 const bcrypt = require('bcryptjs');
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 exports.register = async (req, res) => {
     try {
+        console.log("Request Body:", req.body); // Debugging
         const { userName, password, gymName, profilePic, email } = req.body;
 
         if (!userName || !password || !gymName || !email) {
@@ -34,7 +36,7 @@ exports.register = async (req, res) => {
         });
     } catch (err) {
         console.error("Error in register:", err); // Log error for debugging
-        res.status(500).json({ error: "Server Error in register" });
+        res.status(500).json({ error: "Server Error in register", errorMsg: err.message });
     }
 };
 
@@ -64,9 +66,17 @@ exports.login = async (req, res) => {
         });
     } catch (err) {
         console.error("Error in login:", err); // Log error for debugging
-        res.status(500).json({ error: "Server Error in login" });
+        res.status(500).json({ error: "Server Error in login", errorMsg: err.message });
     }
-};
+}
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.SENDER_EMAIL,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
 
 exports.sendOtp = async (req, res) => {
     try {
@@ -85,17 +95,79 @@ exports.sendOtp = async (req, res) => {
         // Generate OTP
         const buffer = crypto.randomBytes(4); // 4 bytes = 32 bits = 2^32 = 4,294,967,296 possible values
         const token = buffer.readUInt32BE(0) % 900000 + 100000; // 6 digit OTP
-        console.log("Generated OTP:", token);
+        gym.resetPasswordToken = token;
+        gym.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
 
-        // TODO: Send OTP via email or SMS (integration required)
+        await gym.save();
 
-        res.status(200).json({
-            message: "OTP sent successfully",
-            success: "true",
-            otp: token // For now, returning OTP in response (remove in production)
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL, // Use environment variable for sender email
+            to: email,
+            subject: 'Password Reset',
+            text: `You requested a Password Reset. Your OTP is: ${token}`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error in sendMail:", error); // Log error for debugging
+                return res.status(500).json({ error: "Failed to send OTP", errorMsg: error.message });
+            } else {
+                console.log("Email sent:", info.response); // Log success for debugging
+                return res.status(200).json({ message: "OTP sent to your email" });
+            }
         });
     } catch (err) {
         console.error("Error in sendOtp:", err); // Log error for debugging
-        res.status(500).json({ error: "Server Error in sendOtp" });
+        res.status(500).json({ error: "Server Error in sendOtp", errorMsg: err.message });
     }
 };
+
+exports.checkOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const gym= await Gym.findOne({
+            email,
+            resetPasswordToken: otp,
+            resetPasswordExpires: { $gt: Date.now() } // Check if the OTP is still valid    
+        });
+     
+
+        if (!gym) {
+            return res.status(400).json({ error: "OTP is invalid or has expired" });
+        }
+        res.status(200).json({ message: "OTP verified successfully" });
+
+       
+
+        // OTP is valid, proceed with password reset
+        res.status(200).json({ message: "OTP verified successfully" });
+    } catch (err) {
+        console.error("Error in checkOtp:", err); // Log error for debugging
+        res.status(500).json({ error: "Server Error in checkOtp", errorMsg: err.message });
+    }
+}   
+
+
+exports.resetPassword = async(req,res)=>{
+    try{
+        const {email,newPassword}=req.body;
+        const gym = await Gym.findOne({email});
+
+        if(!gym){
+            return res.status(400).json({error:'Some technical Error'});
+        }
+        const hashedPassword = await bcrypt.hash(newPassword,10);
+        gym.password = hashedPassword;
+        gym.resetPasswordToken = undefined;
+        gym.resetPasswordExpires = undefined;
+        
+        await gym.save();
+        res.status(200).json({message:"password Reset Sucessfully"})
+
+    }catch(err){
+        res.status(500).json({
+            error:"Server Error"
+        })
+    }
+}
+
