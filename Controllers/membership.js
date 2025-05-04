@@ -43,3 +43,36 @@ exports.getMembership = async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 };
+
+
+exports.expiringWithIn4To7Days = async (req, res) => {
+    try{
+
+    }catch(err){
+        console.log(err);
+        res.status(500).json({ error: "Server Error" });
+    
+
+    }
+
+}
+
+exports.inAxtiveMember = async (req, res) => {
+    try {
+         
+
+        const members = await Member.find({
+            gym: req.gym._id,
+            status:"Pending"
+        });
+
+        res.status(200).json({
+            message: member.length ? "Fetched members successfully" : "No inactive members found",
+            members:member,
+            totalMembers: members.length
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+}
