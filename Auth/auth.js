@@ -10,11 +10,10 @@ module.exports = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        console.log("Decoded token:", decoded); // Debugging
-        req.gym = decoded; // Attach all token data to the request
-        next();
+        console.log("Decoded token:", decoded); 
+        req.gym = decoded;  
     } catch (err) {
-        console.error("Error verifying token:", err); // Debugging
+        console.error("Error verifying token:", err); 
         return res.status(401).json({ error: "Invalid Token", errorMsg: err.message });
     }
 };
