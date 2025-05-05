@@ -2,6 +2,9 @@ const Gym = require('../Modals/gym.js');
 const bcrypt = require('bcryptjs');
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
 
 exports.register = async (req, res) => {
     try {
@@ -38,8 +41,15 @@ exports.register = async (req, res) => {
         console.error("Error in register:", err); // Log error for debugging
         res.status(500).json({ error: "Server Error in register", errorMsg: err.message });
     }
-};
+}
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: false, // Set to true if using HTTPS
+    sameSite: 'Lax',
+    // Adjust as needed
+
+};
 exports.login = async (req, res) => {
     try {
         const { userName, password } = req.body;
@@ -54,21 +64,32 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: "Invalid Credentials" });
         }
 
-        const isMatch = await bcrypt.compare(password, gym.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: "Invalid Credentials" });
+        if (gym && await bcrypt.compare(password, gym.password)) {
+            const token = jwt.sign(
+                {
+                    gym_id: gym._id,
+                    email: gym.email,
+                    userName: gym.userName,
+                    profilePic: gym.profilePic,
+                    gymName: gym.gymName
+                },
+                process.env.JWT_SECRET_KEY
+            );
+
+            // Set the token in a cookie
+            res.cookie("cookie_token", token, cookieOptions);
+
+            res.json({ message: "Login Successful", success: "true", gym });
+        } else {
+            res.status(400).json({ error: "Invalid Credentials" });
         }
 
-        res.json({
-            message: "Login Successful",
-            success: "true",
-            gym
-        });
     } catch (err) {
         console.error("Error in login:", err); // Log error for debugging
         res.status(500).json({ error: "Server Error in login", errorMsg: err.message });
     }
-}
+};
+
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -125,19 +146,19 @@ exports.sendOtp = async (req, res) => {
 exports.checkOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        const gym= await Gym.findOne({
+        const gym = await Gym.findOne({
             email,
             resetPasswordToken: otp,
             resetPasswordExpires: { $gt: Date.now() } // Check if the OTP is still valid    
         });
-     
+
 
         if (!gym) {
             return res.status(400).json({ error: "OTP is invalid or has expired" });
         }
         res.status(200).json({ message: "OTP verified successfully" });
 
-       
+
 
         // OTP is valid, proceed with password reset
         res.status(200).json({ message: "OTP verified successfully" });
@@ -145,29 +166,39 @@ exports.checkOtp = async (req, res) => {
         console.error("Error in checkOtp:", err); // Log error for debugging
         res.status(500).json({ error: "Server Error in checkOtp", errorMsg: err.message });
     }
-}   
+}
 
 
-exports.resetPassword = async(req,res)=>{
-    try{
-        const {email,newPassword}=req.body;
-        const gym = await Gym.findOne({email});
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+        const gym = await Gym.findOne({ email });
 
-        if(!gym){
-            return res.status(400).json({error:'Some technical Error'});
+        if (!gym) {
+            return res.status(400).json({ error: 'Some technical Error' });
         }
-        const hashedPassword = await bcrypt.hash(newPassword,10);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
         gym.password = hashedPassword;
         gym.resetPasswordToken = undefined;
         gym.resetPasswordExpires = undefined;
-        
-        await gym.save();
-        res.status(200).json({message:"password Reset Sucessfully"})
 
-    }catch(err){
+        await gym.save();
+        res.status(200).json({ message: "password Reset Sucessfully" })
+
+    } catch (err) {
         res.status(500).json({
-            error:"Server Error"
+            error: "Server Error"
         })
     }
-}
+};
 
+
+exports.logout = async (req, res) => {
+    try {
+        res.clearCookie("cookie_token", cookieOptions);
+        res.status(200).json({ message: "Logout Successful" });
+    } catch (err) {
+        console.error("Error in logout:", err); // Log error for debugging
+        res.status(500).json({ error: "Server Error in logout", errorMsg: err.message });
+    }
+}

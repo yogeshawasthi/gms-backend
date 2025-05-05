@@ -7,5 +7,6 @@ router.post('/login' , gymController.login);
 router.post('/reset-password/sendOtp',gymController.sendOtp)
 router.post('/reset-password/checkOtp', gymController.checkOtp);
 router.post('/reset-password',gymController.resetPassword);
+router.get('/logout', gymController.logout);
 
 module.exports = router;

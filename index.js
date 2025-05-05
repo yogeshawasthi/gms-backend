@@ -1,8 +1,14 @@
 const express = require('express');
 const app = express();
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
+
 
 const PORT = process.env.PORT;
+
+app.use(cookieParser());
 
 require('./DBConn/conn.js');
 
