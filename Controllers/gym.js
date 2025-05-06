@@ -19,9 +19,10 @@ exports.register = async (req, res) => {
         if (isExist) {
             return res.status(400).json({ error: "User Already Exists" });
         }
+        
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
+        console.log("Hashed Password:", hashedPassword); // Debugging
         const newGym = new Gym({
             userName,
             password: hashedPassword,
@@ -58,12 +59,14 @@ exports.login = async (req, res) => {
         if (!userName || !password) {
             return res.status(400).json({ error: "Username and password are required" });
         }
+         
 
         const gym = await Gym.findOne({ userName });
         if (!gym) {
             return res.status(400).json({ error: "Invalid Credentials" });
         }
 
+        
         if (gym && await bcrypt.compare(password, gym.password)) {
             const token = jwt.sign(
                 {
