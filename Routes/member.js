@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const auth = require('../auth/auth.js');
+const auth = require('../Auth/auth.js');
 
 router.get('/all-member', auth, MemberController.getAllMembers);
 router.post('/register-member', auth, MemberController.registerMember);
