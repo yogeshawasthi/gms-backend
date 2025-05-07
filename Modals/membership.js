@@ -11,6 +11,7 @@ const membershipSchema = mongoose.Schema({
         required: true,
     },
     gym: { type: mongoose.Schema.Types.ObjectId, ref: 'gym',required: true }, 
+    // Reference to the gym model
 
 
 })

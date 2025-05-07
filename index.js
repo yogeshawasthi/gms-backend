@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 
 
-
 const PORT = process.env.PORT;
 
 app.use(cookieParser());
