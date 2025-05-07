@@ -149,27 +149,26 @@ exports.sendOtp = async (req, res) => {
 exports.checkOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
+
+        // Find the gym by email and OTP
         const gym = await Gym.findOne({
             email,
             resetPasswordToken: otp,
-            resetPasswordExpires: { $gt: Date.now() } // Check if the OTP is still valid    
+            resetPasswordExpires: { $gt: Date.now() } // Check if the OTP is still valid
         });
-
 
         if (!gym) {
             return res.status(400).json({ error: "OTP is invalid or has expired" });
         }
-        res.status(200).json({ message: "OTP verified successfully" });
 
+        // OTP is valid, send a success response
+        return res.status(200).json({ message: "OTP verified successfully" });
 
-
-        // OTP is valid, proceed with password reset
-        res.status(200).json({ message: "OTP verified successfully" });
     } catch (err) {
         console.error("Error in checkOtp:", err); // Log error for debugging
-        res.status(500).json({ error: "Server Error in checkOtp", errorMsg: err.message });
+        return res.status(500).json({ error: "Server Error in checkOtp", errorMsg: err.message });
     }
-}
+};
 
 
 exports.resetPassword = async (req, res) => {
@@ -204,4 +203,4 @@ exports.logout = async (req, res) => {
         console.error("Error in logout:", err); // Log error for debugging
         res.status(500).json({ error: "Server Error in logout", errorMsg: err.message });
     }
-}
+};
