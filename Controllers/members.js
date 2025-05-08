@@ -1,4 +1,65 @@
-const Member = require('../models/member'); // Ensure the Member model path is correct
+const Member = require('../Modals/member'); 
+const Membership = require('../Modals/membership'); 
+
+
+
+  // Controller to get all members
+  
+  exports.getAllmember = async (req, res) => {
+    try {
+      const { skip = 0, limit = 10 } = req.query; 
+      console.log("Skip:", skip, "Limit:", limit); 
+  
+      const members = await Member.find({ gym: req.gym._id });
+      const totalMembers = members.length;
+  
+      const limitedMembers = await Member.find({ gym: req.gym._id })
+        .sort({ createdAt: -1 })
+        .skip(parseInt(skip)) 
+        .limit(parseInt(limit)); 
+  
+      res.status(200).json({
+        message: members.length
+          ? "Fetched Members Successfully"
+          : "No any Member Registered yet",
+        members: limitedMembers,
+        totalMembers: totalMembers,
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ error: "Server Error" });
+    }
+  };
+  
+
+  exports.registerMember = async(req,res)=>{// Controller to register a new member
+    try{
+        const {name,mobileNo,address,membership,profilePic,joiningDate} = req.body;
+        const member = await Member.findOne({gym:req.gym._id,mobileNo});
+        if(member){
+            return res.status(400).json({error:'Already registered with this Mobile No'});
+        }
+        if(membership){
+               let jngDate = new Date(joiningDate);
+               const nextBillDate = addMonthsToDate(membership.months, jngDate);
+               let newMember = new Member({name, mobileNo, address, membership, gym: req.gym._id, profilePic, nextBillDate});
+               await newMember.save();
+               res.status(200).json({message: "Member Registered successfully", newMember});
+
+        }else{
+            return res.status(400).json({error: "No such Membership exists"});
+        }
+
+        
+    }catch(err){
+            console.log(err);
+            res.status(500).json({ error: 'Server Error'});
+        }
+
+    }
+
+
+
 
 // Controller to get monthly members
 exports.monthlyMember = async (req, res) => {
