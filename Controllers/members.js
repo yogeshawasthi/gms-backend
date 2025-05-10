@@ -8,7 +8,7 @@ const Membership = require('../Modals/membership');
   
   exports.getAllmember = async (req, res) => {
     try {
-      const { skip = 0, limit = 10 } = req.query; 
+      const { skip = 0, limit = 09 } = req.query; 
       console.log("Skip:", skip, "Limit:", limit); 
   
       const members = await Member.find({ gym: req.gym._id });
@@ -33,9 +33,13 @@ const Membership = require('../Modals/membership');
   };
   
 
-  function addMonthsToDate(months,joiningDate){
-    //get Current year , month and date
-    let today = joiningDate;
+  function addMonthsToDate(months, joiningDate) {
+    // Ensure joiningDate is a valid date
+    const today = new Date(joiningDate);
+    if (isNaN(today.valueOf())) {
+        throw new Error("Invalid joining date provided");
+    }
+
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth();
     const currentDay = today.getDate();
@@ -44,60 +48,64 @@ const Membership = require('../Modals/membership');
     const futureMonth = currentMonth + months;
     const futureYear = currentYear + Math.floor(futureMonth / 12);
 
-    //calculate the correct future month (Modulus for month)
+    // Calculate the correct future month (modulus for month)
     const adjustedMonth = futureMonth % 12;
 
-    //set the date to the frist of the future month
+    // Set the date to the first of the future month
     const futureDate = new Date(futureYear, adjustedMonth, 1);
 
-    //set the date to the last day of the future month
+    // Set the date to the last day of the future month
     const lastDayOfFutureMonth = new Date(futureYear, adjustedMonth + 1, 0).getDate();
 
-    //adjust the day if current day exceeds the last day of the future month
+    // Adjust the day if the current day exceeds the last day of the future month
     const adjustedDay = Math.min(currentDay, lastDayOfFutureMonth);
 
-    //set final adjusted date
+    // Set the final adjusted date
     futureDate.setDate(adjustedDay);
 
     return futureDate;
-
-   
   }
 
 
 
  exports.registerMember = async (req, res) => {
     try {
-        // Extracting data from the request body
         const { name, mobileNo, address, membership, profilePic, joiningDate } = req.body;
-        
-        // Finding member by mobile number
+
+        // Check if the member is already registered with the same mobile number
         const member = await Member.findOne({ gym: req.gym._id, mobileNo: mobileNo });
         if (member) {
             return res.status(409).json({ error: "Already registered with this Mobile No" });
         }
 
-        // Finding membership details
+        // Find membership details
         const memberShip = await Membership.findOne({ _id: membership, gym: req.gym._id });
-        const membershipMonth = memberShip.months;
-
-        if (memberShip) {
-            let jngDate = new Date(joiningDate);
-            const nextBillDate = addMonthsToDate(membershipMonth, jngDate);
-            let newmember = new Member({
-                name,
-                mobileNo,
-                address,
-                membership,
-                profilePic,
-                gym: req.gym._id,
-                joiningDate: jngDate,
-                nextBillDate: nextBillDate
-            });
-            // Additional logic regarding membership can be added here, e.g., save the member
-        } else {
-            return res.status(409).json({ error: "No such Membership are there" });
+        if (!memberShip) {
+            return res.status(409).json({ error: "No such Membership exists" });
         }
+
+        const membershipMonth = memberShip.months;
+        console.log("Membership Month:", membershipMonth);
+        // Check if the membership month is valid
+
+        // Calculate the next billing date
+        const jngDate = new Date(joiningDate);
+        const nextBillDate = addMonthsToDate(membershipMonth, jngDate);
+
+
+        // Create a new member
+        const newMember = new Member({
+            name,
+            mobileNo,
+            address,
+            membership,
+            profilePic,
+            gym: req.gym._id,
+            nextBillDate,
+        });
+
+        await newMember.save();
+        return res.status(200).json({ message: "Member registered successfully", newMember });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ error: "Server error" });
