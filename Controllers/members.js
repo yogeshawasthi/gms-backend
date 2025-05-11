@@ -8,7 +8,7 @@ const Membership = require('../Modals/membership');
   
   exports.getAllmember = async (req, res) => {
     try {
-      const { skip = 0, limit = 09 } = req.query; 
+      const { skip = 0, limit = 9 } = req.query; 
       console.log("Skip:", skip, "Limit:", limit); 
   
       const members = await Member.find({ gym: req.gym._id });
@@ -204,3 +204,30 @@ exports.expiredMembers = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.searchMeber = async (req, res) => { 
+  try {
+    const { searchTerm } = req.query;
+    console.log("Search Query:", searchTerm);
+
+    const member = await Member.find({
+      gym: req.gym._id,
+      $or: [
+        { name: { $regex: '^' + searchTerm, $options: "i" } },
+        { mobileNo: { $regex: '^' + searchTerm, $options: "i" } }
+      ]
+    });
+
+    res.status(200).json({
+      message: member.length
+        ? "Fetched members successfully"
+        : "No such member found",
+      membes: member,
+      totalMembers: member.length
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+
+}
