@@ -14,7 +14,8 @@ const membershipSchema = mongoose.Schema({
     // Reference to the gym model
 
 
-})
+},{ timestamps: true } // Automatically manage createdAt and updatedAt fields
+);
 
 const modaalMembership = mongoose.model("membership", membershipSchema);
 

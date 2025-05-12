@@ -45,7 +45,7 @@ const memberSchema = mongoose.Schema({
 
 
    
-})
+},{timestamps: true});
 
 const modalMember = mongoose.model("member", memberSchema);
 

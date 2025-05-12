@@ -116,7 +116,19 @@ const Membership = require('../Modals/membership');
 // Controller to get monthly members
 exports.monthlyMember = async (req, res) => {
   try {
-    const members = await Member.find({ gym: req.gym._id });
+    const now = new Date();
+    // Get the first day fo the current month
+    const starOfMonth = new Date(now.getFullYear(),now.getMonth(),1)
+
+    // Get the last day of the current month
+    const endOfMonth = new Date(now.getFullYear(),now.getMonth() + 1,0,23,59,59,999);
+
+    const member = await Member.find({ gym: req.gym._id ,
+      createdAt:{
+        $gte: starOfMonth,
+        $lte: endOfMonth
+      }
+    });
     res.status(200).json({ members });
   } catch (err) {
     console.error(err);
