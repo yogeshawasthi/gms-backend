@@ -125,11 +125,17 @@ exports.monthlyMember = async (req, res) => {
 
     const member = await Member.find({ gym: req.gym._id ,
       createdAt:{
-        $gte: starOfMonth,
+        $gte: starOfMonth,//
         $lte: endOfMonth
       }
-    });
-    res.status(200).json({ members });
+    }).sort({ createdAt: -1 });
+    
+    res.status(200).json({ 
+      message: member.length
+        ? "Fetched members successfully"
+        : "No member registered in this month",
+      members: member,
+    totalMembers: member.length});
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
