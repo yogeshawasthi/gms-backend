@@ -152,8 +152,8 @@ exports.expiringWithin3Days = async (req, res) => {
     const members = await Member.find({
       gym: req.gym._id,
       nextBillDate: {
-        $gte: today,
-        $lte: nextThreeDays
+        $gte: today, //Greater than or equal to today
+        $lte: nextThreeDays // Less than or equal to 3 days from now
       }
     });
 
