@@ -176,16 +176,17 @@ exports.expiringWithin4To7Days = async (req, res) => {
   try {
     const today = new Date();
     const next4Days = new Date();
-     sevenDaysFromNow = new Date();
+    next4Days.setDate(today.getDate()+4);
 
-    fourDaysFromNow.setDate(today.getDate() + 4);
-    sevenDaysFromNow.setDate(today.getDate() + 7);
+    const next7Days = new Date();
+    next7Days.setDate(today.getDate()+7);
+
 
     const members = await Member.find({
       gym: req.gym._id,
       nextBillDate: {
-        $gte: fourDaysFromNow,
-        $lte: sevenDaysFromNow
+        $gte: next4Days, // Greater than or eaual to 4 days later form today
+        $lte: next7Days // Less than or equal to 7 days form today
       }
     });
 
