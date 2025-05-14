@@ -146,6 +146,7 @@ exports.monthlyMember = async (req, res) => {
 exports.expiringWithin3Days = async (req, res) => {
   try {
     const today = new Date();
+    console.log(today);
     const nextThreeDays = new Date();
     nextThreeDays.setDate(today.getDate() + 3);
 
@@ -174,8 +175,9 @@ exports.expiringWithin3Days = async (req, res) => {
 exports.expiringWithin4To7Days = async (req, res) => {
   try {
     const today = new Date();
-    const fourDaysFromNow = new Date();
-    const sevenDaysFromNow = new Date();
+    const next4Days = new Date();
+     sevenDaysFromNow = new Date();
+
     fourDaysFromNow.setDate(today.getDate() + 4);
     sevenDaysFromNow.setDate(today.getDate() + 7);
 
