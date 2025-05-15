@@ -230,6 +230,30 @@ exports.expiredMembers = async (req, res) => {
   }
 };
 
+
+exports.inActiveMember = async (req,res) => {
+  try{
+    const members = await Member.find({
+      gym: req.gym._id,
+      status: "InActive"
+    }).sort({ nextBillDate: 1 });
+
+    res.status(200).json({
+      message: members.length
+        ? "Fetched members successfully"
+        : "No such member has been expired",
+      members,
+      totalMembers: members.length
+    });
+
+
+  }catch(err){
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+  
+}
+
 exports.searchMeber = async (req, res) => { 
   try {
     const { searchTerm } = req.query;
