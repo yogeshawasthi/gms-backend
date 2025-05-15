@@ -207,11 +207,15 @@ exports.expiringWithin4To7Days = async (req, res) => {
 exports.expiredMembers = async (req, res) => {
   try {
     const today = new Date();
+    console.log("Fetching expired members as of:", today);
+
     const members = await Member.find({
       gym: req.gym._id,
-      status: "active",
-      nextBillDate: { $lt: today } // Less than today (expired)
-    });
+      status: "Active", 
+      nextBillDate: { $lt: today } // Members whose nextBillDate is before today
+    }).sort({ nextBillDate: 1 }); // Optional: sort by soonest expired
+
+    console.log("Expired members found:", members.length);
 
     res.status(200).json({
       message: members.length
@@ -221,7 +225,7 @@ exports.expiredMembers = async (req, res) => {
       totalMembers: members.length
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching expired members:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
