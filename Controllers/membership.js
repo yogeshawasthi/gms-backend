@@ -58,75 +58,75 @@ exports.getMembership = async (req, res) => {
 };
 
 
-exports.expiringWithIn4To7Days = async (req, res) => {
-    try{
+// exports.expiringWithIn4To7Days = async (req, res) => {
+//     try{
 
-    }catch(err){
-        console.log(err);
-        res.status(500).json({ error: "Server Error" });
+//     }catch(err){
+//         console.log(err);
+//         res.status(500).json({ error: "Server Error" });
     
 
-    }
+//     }
 
-}
+// }
 
-exports.ixActiveMember = async (req, res) => {
-    try {
+// exports.ixActiveMember = async (req, res) => {
+//     try {
          
 
-        const members = await Member.find({
-            gym: req.gym._id,
-            status:"Pending"
-        });
+//         const members = await Member.find({
+//             gym: req.gym._id,
+//             status:"Pending"
+//         });
 
-        res.status(200).json({
-            message: member.length ? "Fetched members successfully" : "No inactive members found",
-            members:member,
-            totalMembers: members.length
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
-    }
-};
+//         res.status(200).json({
+//             message: member.length ? "Fetched members successfully" : "No inactive members found",
+//             members:member,
+//             totalMembers: members.length
+//         });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: "Server error" });
+//     }
+// };
 
-exports.registerMember = async (req, res) => {
-    try {
-        const { name, mobileNo, address, membership, profilePic, joiningDate } = req.body;
+// exports.registerMember = async (req, res) => {
+//     try {
+//         const { name, mobileNo, address, membership, profilePic, joiningDate } = req.body;
 
-        console.log("Request Body:", req.body); // Debugging
+//         console.log("Request Body:", req.body); // Debugging
 
-        // Check if the member is already registered with the same mobile number
-        const member = await Member.findOne({ gym: req.gym._id, mobileNo });
-        if (member) {
-            return res.status(400).json({ error: 'Already registered with this Mobile No' });
-        }
+//         // Check if the member is already registered with the same mobile number
+//         const member = await Member.findOne({ gym: req.gym._id, mobileNo });
+//         if (member) {
+//             return res.status(400).json({ error: 'Already registered with this Mobile No' });
+//         }
 
-        if (membership) {
-            let jngDate = new Date(joiningDate);
-            const membershipDetails = await Membership.findById(membership); // Fetch membership details
-            if (!membershipDetails) {
-                return res.status(400).json({ error: "No such Membership exists" });
-            }
+//         if (membership) {
+//             let jngDate = new Date(joiningDate);
+//             const membershipDetails = await Membership.findById(membership); // Fetch membership details
+//             if (!membershipDetails) {
+//                 return res.status(400).json({ error: "No such Membership exists" });
+//             }
 
-            const nextBillDate = addMonthsToDate(membershipDetails.months, jngDate);
-            let newMember = new Member({
-                name,
-                mobileNo,
-                address,
-                membership,
-                gym: req.gym._id,
-                profilePic,
-                nextBillDate
-            });
+//             const nextBillDate = addMonthsToDate(membershipDetails.months, jngDate);
+//             let newMember = new Member({
+//                 name,
+//                 mobileNo,
+//                 address,
+//                 membership,
+//                 gym: req.gym._id,
+//                 profilePic,
+//                 nextBillDate
+//             });
 
-            await newMember.save();
-            res.status(200).json({ message: "Member Registered successfully", newMember });
-        } else {
-            return res.status(400).json({ error: "Membership ID is required" });
-        }
-    } catch (err) {
-        console.error("Error in registerMember:", err);
-        res.status(500).json({ error: 'Server Error' });
-    }
-};
+//             await newMember.save();
+//             res.status(200).json({ message: "Member Registered successfully", newMember });
+//         } else {
+//             return res.status(400).json({ error: "Membership ID is required" });
+//         }
+//     } catch (err) {
+//         console.error("Error in registerMember:", err);
+//         res.status(500).json({ error: 'Server Error' });
+//     }
+// };
