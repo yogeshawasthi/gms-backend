@@ -235,7 +235,7 @@ exports.inActiveMember = async (req,res) => {
   try{
     const members = await Member.find({
       gym: req.gym._id,
-      status: "InActive"
+      status: "InActive" //inactive meeeember
     }).sort({ nextBillDate: 1 });
 
     res.status(200).json({
