@@ -12,4 +12,6 @@ router.get('/within-3-days-expiring', auth, MemberController.expiringWithin3Days
 router.get('/within-4-7-expiring', auth, MemberController.expiringWithin4To7Days);
 router.get('/expired-member', auth, MemberController.expiredMembers);
 router.get('/inactive-member', auth, MemberController.inActiveMember);
+
+router.get('/get-member/:id',auth,MemberController.getMemberDetails);
 module.exports = router;

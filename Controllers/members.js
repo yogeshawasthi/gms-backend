@@ -273,10 +273,27 @@ exports.searchMeber = async (req, res) => {
         : "No such member found",
       membes: member,
       totalMembers: member.length
-    });
+    })
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 
+}
+
+exports.getMemberDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Fetching details for member with ID: ${id} in gym: ${req.gym._id}`);
+    const member = await Member.findOne({ _id: id, gym: req.gym._id });
+    if (!member) {
+      console.log(`No member found with ID: ${id}`);
+      return res.status(404).json({ error: "No such member found" });
+    }
+    console.log(`Member found: ${member.name}`);
+    res.status(200).json({ member });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 }
