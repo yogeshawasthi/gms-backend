@@ -303,15 +303,17 @@ exports.changeStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const member = await Member.findOne({_id:id,gym:req.gym._id});
-    if(!member){
-      return res.status(400).json({error:"No such Member"})
-      
+    res.status(200).json({ message: "Changing member status..." }); // Beginning message
+
+    const member = await Member.findOne({ _id: id, gym: req.gym._id });
+    if (!member) {
+      return res.status(400).json({ error: "No such Member" });
     }
-  
-  }
-  catch (err) {
+
+    member.status = status;
+    await member.save();
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
-} 
+}
