@@ -303,7 +303,7 @@ exports.changeStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    res.status(200).json({ message: "Changing member status..." }); // Beginning message
+    res.status(200).json({ message: "Changing member status..." }); 
 
     const member = await Member.findOne({ _id: id, gym: req.gym._id });
     if (!member) {
