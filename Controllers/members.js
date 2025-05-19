@@ -303,7 +303,7 @@ exports.changeStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    res.status(200).json({ message: "Changing member status..." }); 
+    res.status(200).json({ message: " member status Changed Successfully.." }); 
 
     const member = await Member.findOne({ _id: id, gym: req.gym._id });
     if (!member) {
@@ -313,6 +313,16 @@ exports.changeStatus = async (req, res) => {
     member.status = status;
     await member.save();
   } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
+
+exports.updateMemberPlan=async(req,res)=>{
+
+  try{
+
+  }catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
