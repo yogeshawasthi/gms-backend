@@ -321,6 +321,28 @@ exports.changeStatus = async (req, res) => {
 exports.updateMemberPlan=async(req,res)=>{
 
   try{
+    const { membership } = req.body;
+    const {id} = req.params;
+    const memberShip = await Membership.findOne({gym:req.gym._id,_id:membership});
+    if(memberShip){
+      let getMonth = memberShip.months;
+      let today = new Date();
+      let nextBillDate = addMonthsToDate(getMonth,today);
+      const member = await Member.findOne({gym:req.gym._id,_id:id});
+      if(!member){
+        return res.status(409).json({error:"No such Member are there"})
+
+      }
+      member.nextBillDate = nextBillDate;
+      member.lastPaymentDate = today;
+
+      await member.save();
+      return res.status(200).json({error:"Member Renewed Successfully",member});
+
+    }else{
+      return res.status(409).json({error:"No Membership Exist"})
+    }
+
 
   }catch (err) {
     console.error(err);
