@@ -207,15 +207,13 @@ exports.expiringWithin4To7Days = async (req, res) => {
 exports.expiredMembers = async (req, res) => {
   try {
     const today = new Date();
-    console.log("Fetching expired members as of:", today);
+    today.setHours(0, 0, 0, 0); // Only compare date part
 
     const members = await Member.find({
       gym: req.gym._id,
-      status: "Active", 
-      nextBillDate: { $lt: today } // Members whose nextBillDate is before today
-    }).sort({ nextBillDate: 1 }); // Optional: sort by soonest expired
-
-    console.log("Expired members found:", members.length);
+      status: { $in: ["Active", "Pending", "Inactive"] }, // Include Inactive status
+      nextBillDate: { $lt: today }
+    }).sort({ nextBillDate: 1 });
 
     res.status(200).json({
       message: members.length
@@ -231,28 +229,29 @@ exports.expiredMembers = async (req, res) => {
 };
 
 
-exports.inActiveMember = async (req,res) => {
-  try{
+exports.inActiveMember = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Only compare date part
+
     const members = await Member.find({
       gym: req.gym._id,
-      status: "InActive" //inactive meeeember
+      status: { $in: ["Inactive", "Pending"] },
+      nextBillDate: { $gte: today }
     }).sort({ nextBillDate: 1 });
 
     res.status(200).json({
       message: members.length
         ? "Fetched members successfully"
-        : "No such member has been expired",
+        : "No such member found",
       members,
       totalMembers: members.length
     });
-
-
-  }catch(err){
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
-  
-}
+};
 
 exports.searchMeber = async (req, res) => { 
   try {
