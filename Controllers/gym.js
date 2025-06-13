@@ -116,32 +116,40 @@ exports.sendOtp = async (req, res) => {
             return res.status(400).json({ error: "Gym Not Found" });
         }
 
-        // Generate OTP
-        const buffer = crypto.randomBytes(4); // 4 bytes = 32 bits = 2^32 = 4,294,967,296 possible values
-        const token = buffer.readUInt32BE(0) % 900000 + 100000; // 6 digit OTP
+        // Generate OTP as a 6-digit string
+        const otpNum = Math.floor(100000 + Math.random() * 900000);
+        const token = otpNum.toString();
         gym.resetPasswordToken = token;
         gym.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
 
         await gym.save();
 
         const mailOptions = {
-            from: process.env.SENDER_EMAIL, // Use environment variable for sender email
+            from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
             to: email,
-            subject: 'Password Reset',
-            text: `You requested a Password Reset. Your OTP is: ${token}`
+            subject: 'Password Reset OTP',
+            text: `You requested a password reset for your Gym Management System account.\n\nYour OTP is: ${token}\n\nIf you did not request this, please ignore this email.`,
+            html: `<p>You requested a password reset for your <b>Gym Management System</b> account.</p>
+                   <p><b>Your OTP is: <span style="font-size:18px;">${token}</span></b></p>
+                   <p>If you did not request this, please ignore this email.</p>`,
+            headers: {
+                'X-Priority': '1 (Highest)',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.error("Error in sendMail:", error); // Log error for debugging
+                console.error("Error in sendMail:", error);
                 return res.status(500).json({ error: "Failed to send OTP", errorMsg: error.message });
             } else {
-                console.log("Email sent:", info.response); // Log success for debugging
+                console.log("Email sent:", info.response);
                 return res.status(200).json({ message: "OTP sent to your email" });
             }
         });
     } catch (err) {
-        console.error("Error in sendOtp:", err); // Log error for debugging
+        console.error("Error in sendOtp:", err);
         res.status(500).json({ error: "Server Error in sendOtp", errorMsg: err.message });
     }
 };
