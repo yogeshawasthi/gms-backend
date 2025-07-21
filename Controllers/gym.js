@@ -14,6 +14,11 @@ exports.register = async (req, res) => {
         if (!userName || !password || !gymName || !email) {
             return res.status(400).json({ error: "All fields are required" });
         }
+         // Check if email already exists
+        const emailExist = await Gym.findOne({ email: email.toLowerCase() });
+        if (emailExist) {
+            return res.status(400).json({ error: "Email Already Registered" });
+        }
 
         const isExist = await Gym.findOne({ userName });
         if (isExist) {
