@@ -8,5 +8,7 @@ router.post('/add-Membership',auth, MembershipController.addMembership);
 
 // Route to get memberships
 router.get('/getMembership', auth, MembershipController.getMembership);
+// Route to delete a membership
+router.delete('/delete-membership/:id', auth, MembershipController.deleteMembership);
 
 module.exports = router;

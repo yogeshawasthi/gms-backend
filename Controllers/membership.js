@@ -57,6 +57,19 @@ exports.getMembership = async (req, res) => {
     }
 };
 
+exports.deleteMembership = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await Membership.findOneAndDelete({ _id: id, gym: req.gym._id });
+        if (!deleted) {
+            return res.status(404).json({ error: "No such membership found" });
+        }
+        res.status(200).json({ message: "Membership deleted successfully" });
+    } catch (err) {
+        console.error("Error in deleteMembership:", err);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
 
 // exports.expiringWithIn4To7Days = async (req, res) => {
 //     try{

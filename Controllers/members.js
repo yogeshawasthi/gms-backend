@@ -349,3 +349,17 @@ exports.updateMemberPlan=async(req,res)=>{
     res.status(500).json({ error: "Server error" });
   }
 }
+
+exports.deleteMember = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedMember = await Member.findOneAndDelete({ _id: id, gym: req.gym._id });
+    if (!deletedMember) {
+      return res.status(404).json({ error: "No such member found" });
+    }
+    res.status(200).json({ message: "Member deleted successfully", deletedMember });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
