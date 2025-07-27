@@ -39,12 +39,8 @@ const memberSchema = mongoose.Schema({
         type: Date,
         required: true,
 
-    },
-
-        
-
-
-   
+    },     
+  
 },{timestamps: true});
 
 const modalMember = mongoose.model("member", memberSchema);
