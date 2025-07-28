@@ -363,3 +363,6 @@ exports.deleteMember = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// controllers/memberController.js
+
