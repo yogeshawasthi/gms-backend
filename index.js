@@ -7,6 +7,7 @@ const cors = require('cors');
 
 
 
+
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true,
@@ -28,7 +29,7 @@ app.use(express.json()); // This is required to parse JSON data in req.body
 
 app.use('/auth', GymRoutes);
 app.use('/plans', MembershipRoutes);
-app.use('/members', MemberRoutes);
+app.use('/members', MemberRoutes); // Add this line to use the member routes
 
 app.listen(PORT, () => {
     console.log(`Server is running on Port ${PORT}`);

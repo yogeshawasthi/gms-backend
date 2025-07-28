@@ -122,8 +122,8 @@ exports.sendOtp = async (req, res) => {
         }
 
         // Generate OTP as a 6-digit string
-        const otpNum = Math.floor(100000 + Math.random() * 900000);
-        const token = otpNum.toString();
+        const otpNum = Math.floor(100000 + Math.random() * 900000); // Generate a random 6-digit number
+        const token = otpNum.toString(); // Convert OTP to string
         gym.resetPasswordToken = token;
         gym.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
 
