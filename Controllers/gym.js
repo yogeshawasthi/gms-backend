@@ -14,7 +14,7 @@ exports.register = async (req, res) => {
         if (!userName || !password || !gymName || !email) {
             return res.status(400).json({ error: "All fields are required" });
         }
-         // Check if email already exists
+        // Check if email already exists
         const emailExist = await Gym.findOne({ email: email.toLowerCase() });
         if (emailExist) {
             return res.status(400).json({ error: "Email Already Registered" });
@@ -24,30 +24,66 @@ exports.register = async (req, res) => {
         if (isExist) {
             return res.status(400).json({ error: "User Already Exists" });
         }
-        
 
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log("Hashed Password:", hashedPassword); // Debugging
+
+        // Generate email verification token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+        const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hour
+
         const newGym = new Gym({
             userName,
             password: hashedPassword,
             gymName,
             profilePic,
-            email
+            email,
+            isEmailVerified: false,
+            emailVerificationToken: verificationToken,
+            emailVerificationTokenExpires: verificationTokenExpires
         });
 
-        await newGym.save();
+         await newGym.save();
 
-        res.status(201).json({
-            message: "User Registered Successfully",
-            success: "yes",
-            data: newGym
+       
+
+        // Send verification email
+        const verificationUrl = `${process.env.BACKEND_URL || "http://localhost:4000"}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+        const mailOptions = {
+            from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
+            to: email,
+            subject: 'Verify Your Email',
+            html: `
+                <p>Welcome to Gym Management System!</p>
+                <p>Please verify your email by clicking the link below:</p>
+                <a href="${verificationUrl}">Verify Email</a>
+                <p>This link will expire in 5 minutes.</p>
+                <p>If you did not register, please ignore this email.</p>
+            `
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error sending verification email:", error);
+                return res.status(500).json({ error: "Failed to send verification email", errorMsg: error.message });
+            } else {
+                console.log("Verification email sent:", info.response);
+                return res.status(201).json({
+                    message: "User Registered Successfully. Please check your email to verify your account.",
+                    success: "yes",
+                    data: newGym
+                });
+            }
         });
+       
+
+        
+
     } catch (err) {
         console.error("Error in register:", err); // Log error for debugging
         res.status(500).json({ error: "Server Error in register", errorMsg: err.message });
     }
-}
+};
 
 const cookieOptions = {
     httpOnly: true,
@@ -59,35 +95,44 @@ const cookieOptions = {
 exports.login = async (req, res) => {
     try {
         const { userName, password } = req.body;
+        // const status = await Gym.
 
         // Validate request body
         if (!userName || !password) {
             return res.status(400).json({ error: "Username and password are required" });
         }
          
+        
 
         const gym = await Gym.findOne({ userName });
         if (!gym) {
             return res.status(400).json({ error: "Invalid Credentials" });
         }
 
-        
+        if (!gym.isEmailVerified) {
+            return res.status(403).json({ error: "Please verify your email before logging in." });
+        }
+
+        if (gym.status !== 'approved') {
+            return res.status(403).json({ error: "Your gym account is not approved yet. Please wait for admin approval." });
+        }
+
         if (gym && await bcrypt.compare(password, gym.password)) {
             const token = jwt.sign(
-                {
-                    gym_id: gym._id,
-                    email: gym.email,
-                    userName: gym.userName,
-                    profilePic: gym.profilePic,
-                    gymName: gym.gymName
-                },
-                process.env.JWT_SECRET_KEY
+            {
+                gym_id: gym._id,
+                email: gym.email,
+                userName: gym.userName,
+                profilePic: gym.profilePic,
+                gymName: gym.gymName
+            },
+            process.env.JWT_SECRET_KEY
             );
 
-            // Set the token in a cookie
-            res.cookie("cookie_token", token, cookieOptions);
+            // Set the token in a cookie with 24 hour expiry
+            res.cookie("cookie_token", token, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 });
 
-            res.json({ message: "Login Successful", success: "true", gym ,token});
+            res.json({ message: "Login Successful", success: "true", gym, token });
         } else {
             res.status(400).json({ error: "Invalid Credentials" });
         }
@@ -217,3 +262,92 @@ exports.logout = async (req, res) => {
         res.status(500).json({ error: "Server Error in logout", errorMsg: err.message });
     }
 };
+
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { email, token } = req.query; // Use query for GET
+
+        if (!email || !token) {
+            return res.status(400).json({ error: "Invalid verification link." });
+        }
+
+        const gym = await Gym.findOne({
+            email: email.toLowerCase(),
+            emailVerificationToken: token,
+            emailVerificationTokenExpires: { $gt: Date.now() }
+        });
+
+        if (!gym) {
+            return res.status(400).json({ error: "Verification link is invalid or has expired." });
+        }
+
+        if (gym.isEmailVerified) {
+            return res.status(400).json({ error: "Email is already verified." });
+        }
+
+        gym.isEmailVerified = true;
+        gym.emailVerificationToken = undefined;
+        gym.emailVerificationTokenExpires = undefined;
+        await gym.save();
+
+        res.status(200).json({ message: "Email verified successfully. Please wait for admin approval." });
+    } catch (err) {
+        console.error("Error in verifyEmail:", err);
+        res.status(500).json({ error: "Server Error in verifyEmail", errorMsg: err.message });
+    }
+};
+
+exports.sendVerificationEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+        const gym = await Gym.findOne({ email: email.toLowerCase() });
+        if (!gym) {
+            return res.status(404).json({ error: "Email not found." });
+        }
+        if (gym.isEmailVerified) {
+            return res.status(400).json({ error: "Email is already verified." });
+        }
+
+        // Generate new token and expiry (10 minutes)
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+        const verificationTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+        gym.emailVerificationToken = verificationToken;
+        gym.emailVerificationTokenExpires = verificationTokenExpires;
+        await gym.save();
+
+        // Send verification email
+        const verificationUrl = `${process.env.BACKEND_URL || "http://localhost:4000"}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+        const mailOptions = {
+            from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
+            to: email,
+            subject: 'Verify Your Email',
+            html: `
+                <p>Welcome to Gym Management System!</p>
+                <p>Please verify your email by clicking the link below:</p>
+                <a href="${verificationUrl}">Verify Email</a>
+                <p>This link will expire in 1 minute.</p>
+                <p>If you did not register, please ignore this email.</p>
+            `
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("Error sending verification email:", error);
+                return res.status(500).json({ error: "Failed to send verification email", errorMsg: error.message });
+            } else {
+                console.log("Verification email sent:", info.response);
+                return res.status(200).json({
+                    message: "Verification email sent. Please check your inbox.",
+                });
+            }
+        });
+    } catch (err) {
+        console.error("Error in sendVerificationEmail:", err);
+        res.status(500).json({ error: "Server Error in sendVerificationEmail", errorMsg: err.message });
+    }
+};
+

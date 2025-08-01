@@ -27,6 +27,27 @@ const gymSchema = mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
     },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'gym'],
+        default: 'gym'
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: {
+        type: String,
+    },
+    emailVerificationTokenExpires: {
+        type: Date,
+    },
+
 }, { timestamps: true }); // Correct placement of timestamps
 
 const modal = mongoose.model("gym", gymSchema);
