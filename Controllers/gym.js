@@ -30,23 +30,9 @@ exports.register = async (req, res) => {
 
         // Generate email verification token
         const verificationToken = crypto.randomBytes(32).toString("hex");
-        const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hour
+        const verificationTokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
 
-        const newGym = new Gym({
-            userName,
-            password: hashedPassword,
-            gymName,
-            profilePic,
-            email,
-            isEmailVerified: false,
-            emailVerificationToken: verificationToken,
-            emailVerificationTokenExpires: verificationTokenExpires
-        });
-
-         await newGym.save();
-
-       
-
+        
         // Send verification email
         const verificationUrl = `${process.env.BACKEND_URL || "http://localhost:4000"}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
         const mailOptions = {
@@ -75,8 +61,20 @@ exports.register = async (req, res) => {
                 });
             }
         });
+
+        const newGym = new Gym({
+            userName,
+            password: hashedPassword,
+            gymName,
+            profilePic,
+            email,
+            isEmailVerified: false,
+            emailVerificationToken: verificationToken,
+            emailVerificationTokenExpires: verificationTokenExpires
+        });
        
 
+        await newGym.save();
         
 
     } catch (err) {

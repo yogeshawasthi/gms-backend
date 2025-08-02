@@ -194,6 +194,34 @@ exports.getPendingGyms = async (req, res) => {
     }
 };
 
+exports.getApprovedGyms = async (req, res) => {
+    try {
+        // Check if user is logged in and is admin
+        const token = req.cookies.cookie_token;
+        if (!token) {
+            return res.status(401).json({ error: "Unauthorized: No token provided" });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        } catch (err) {
+            return res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
+
+        if (decoded.role !== 'admin') {
+            return res.status(403).json({ error: "Forbidden: Only admin can view gyms" });
+        }
+
+        // Fetch gyms with status 'approved', including profile picture
+        const gyms = await Gym.find({ status: 'approved' }).select('gymName email userName profilePic status');
+        res.json({ gyms });
+    } catch (err) {
+        console.error("Error fetching approved gyms:", err);
+        res.status(500).json({ error: "Server Error", errorMsg: err.message });
+    }
+};
+
 exports.superAdminLogout = (req, res) => {
     try {
         res.clearCookie("cookie_token", {
