@@ -4,3 +4,5 @@ node_modules
 # Build output
 dist/
 .env
+.env.production
+.env.development    
