@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const Member = require('../Modals/member.js');
 
 
 exports.register = async (req, res) => {
@@ -349,3 +350,90 @@ exports.sendVerificationEmail = async (req, res) => {
     }
 };
 
+
+exports.getGymReport = async (req, res) => {
+    try {
+        const { gymId } = req.params;
+        const months = parseInt(req.query.months) || 1;
+
+        // Validate gym
+        const gym = await Gym.findById(gymId);
+        if (!gym) {
+            return res.status(404).json({ error: "Gym not found" });
+        }
+
+        // Calculate date range
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const fromDate = new Date(now);
+        fromDate.setMonth(fromDate.getMonth() - (months - 1));
+        fromDate.setDate(1);
+
+        // Fetch all members for this gym
+        const allMembers = await Member.find({ gym: gymId }).populate('membership');
+
+        // Filter by your logic
+        const activeMembers = allMembers.filter(m =>
+            m.status === "Active" && new Date(m.nextBillDate) >= now
+        );
+
+        const inactiveMembers = allMembers.filter(m =>
+            ["Inactive", "Pending"].includes(m.status) && new Date(m.nextBillDate) >= now
+        );
+
+        // Expired: nextBillDate is in the past and within the selected period
+        const expiredMembers = allMembers.filter(m => {
+            const nextBill = new Date(m.nextBillDate);
+            return (
+                ["Active", "Pending", "Inactive"].includes(m.status) &&
+                nextBill < now &&
+                nextBill >= fromDate
+            );
+        });
+
+        const totalMembers = allMembers.length;
+        const totalIncome = allMembers.reduce((sum, m) => sum + (m.membership?.price || 0), 0);
+
+        res.json({
+            gymName: gym.gymName,
+            period: `${months} month(s)`,
+            from: fromDate,
+            to: now,
+            totalMembers,
+            totalIncome,
+            activeMembers: activeMembers.map(m => ({
+                memberId: m._id,
+                userName: m.name,
+                email: m.email,
+                phone: m.mobileNo,
+                plan: m.membership?.months ? `${m.membership.months} Months` : "",
+                planPrice: m.membership?.price || 0,
+                status: m.status,
+                joiningDate: m.createdAt
+            })),
+            inactiveMembers: inactiveMembers.map(m => ({
+                memberId: m._id,
+                userName: m.name,
+                email: m.email,
+                phone: m.mobileNo,
+                plan: m.membership?.months ? `${m.membership.months} Months` : "",
+                planPrice: m.membership?.price || 0,
+                status: m.status,
+                joiningDate: m.createdAt
+            })),
+            expiredMembers: expiredMembers.map(m => ({
+                memberId: m._id,
+                userName: m.name,
+                email: m.email,
+                phone: m.mobileNo,
+                plan: m.membership?.months ? `${m.membership.months} Months` : "",
+                planPrice: m.membership?.price || 0,
+                status: "Expired", // Always show as Expired
+                joiningDate: m.createdAt
+            }))
+        });
+    } catch (err) {
+        console.error("Error in getGymReport:", err);
+        res.status(500).json({ error: "Server Error in getGymReport", errorMsg: err.message });
+    }
+};

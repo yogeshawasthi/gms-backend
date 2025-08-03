@@ -15,7 +15,7 @@ router.post('/superadmin/change-status' ,auth, admincontroller.changeGymStatus);
 router.get('/verify-email', gymController.verifyEmail);
 router.post('/send-verification-email', gymController.sendVerificationEmail);
 
-
+router.get('/gym/:gymId/report', gymController.getGymReport);
 router.post('/reset-password/sendOtp',gymController.sendOtp)
 router.post('/reset-password/checkOtp', gymController.checkOtp);
 router.post('/reset-password',gymController.resetPassword);
