@@ -7,7 +7,7 @@ const auth = require('../Auth/auth.js');
 router.post('/register', gymController.register);
 router.post('/login' , gymController.login);
 router.post('/superadmin/login' , admincontroller.superAdminLogin);
-router.post('/superadmin/logout' , admincontroller.superAdminLogout);
+router.post('/superadmin/logout' ,auth, admincontroller.superAdminLogout);
 router.get('/superadmin/get-pending-gyms' ,auth, admincontroller.getPendingGyms);
 router.get('/superadmin/get-approved-gyms' ,auth, admincontroller.getApprovedGyms);
 router.get('/superadmin/get-pending-gyms' ,auth, admincontroller.getPendingGyms);
