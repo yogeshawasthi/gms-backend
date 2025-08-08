@@ -91,10 +91,9 @@ exports.changeGymStatus = async (req, res) => {
             return res.status(404).json({ error: "Gym not found" });
         }
 
-        // Prevent sending multiple emails for the same status
-        if ((status === 'approved' && gym.status === 'approved') ||
-            (status === 'rejected' && gym.status === 'rejected')) {
-            return res.status(400).json({ error: `Email already sent for status "${status}"` });
+        // Prevent sending multiple emails for the same status (only for approval)
+        if (status === 'approved' && gym.status === 'approved') {
+            return res.status(400).json({ error: `Email already sent for status "approved"` });
         }
 
         // Once approved, don't allow to reject
@@ -112,10 +111,7 @@ exports.changeGymStatus = async (req, res) => {
         });
 
         if (status === 'approved') {
-            gym.status = 'approved';
-            await gym.save();
-
-            // Send approval email
+            // Send approval email first
             const mailOptions = {
                 from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
                 to: gym.email,
@@ -129,11 +125,20 @@ exports.changeGymStatus = async (req, res) => {
                 }
             };
 
-            await transporter.sendMail(mailOptions);
-
-            return res.json({ message: "Gym status updated to approved and email sent", gym });
+            try {
+                await transporter.sendMail(mailOptions);
+                gym.status = 'approved';
+                await gym.save();
+                return res.json({ message: "Gym status updated to approved and email sent", gym });
+            } catch (emailErr) {
+                return res.status(500).json({ error: "Failed to send the email. Status not updated. Try again." });
+            }
         } else if (status === 'rejected') {
-            // Send rejection email before deleting
+            // Just reject the gym, regardless of email sending
+            gym.status = 'rejected';
+            await gym.save();
+
+            // Try to send rejection email, but don't block rejection if email fails
             const mailOptions = {
                 from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
                 to: gym.email,
@@ -147,16 +152,17 @@ exports.changeGymStatus = async (req, res) => {
                 }
             };
 
-            await transporter.sendMail(mailOptions);
+            try {
+                await transporter.sendMail(mailOptions);
+            } catch (emailErr) {
+                // Log error but proceed
+                console.error("Failed to send rejection email:", emailErr);
+            }
 
-            // Mark as rejected before deleting to prevent multiple emails
-            gym.status = 'rejected';
-            await gym.save();
+            // Optionally, you can delete the gym after rejection if needed
+            // await Gym.findByIdAndDelete(gymId);
 
-            // Delete the gym record after sending the email
-            await Gym.findByIdAndDelete(gymId);
-
-            return res.json({ message: "Gym rejected, deleted from database and email sent" });
+            return res.json({ message: "Gym rejected and status updated", gym });
         } else {
             return res.status(400).json({ error: "Invalid status value" });
         }
@@ -243,7 +249,7 @@ exports.getApprovedGyms = async (req, res) => {
         }
 
         // Fetch gyms with status 'approved', including profile picture
-        const gyms = await Gym.find({ status: 'approved' }).select('gymName email userName profilePic status');
+        const gyms = await Gym.find({ status: 'approved',role:'gym',isEmailVerified:true }).select('gymName email userName profilePic status');
         res.json({ gyms });
     } catch (err) {
         console.error("Error fetching approved gyms:", err);

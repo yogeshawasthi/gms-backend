@@ -22,8 +22,9 @@ const seedSuperAdmin = async () => {
     password: hashedPassword,
     role: "admin",
     gymName: "Gym World", // <--'
-    profilePic: "https://your-default-image-url.com/profile.png",
+    profilePic: "http://res.cloudinary.com/dnbtfydel/image/upload/v1754628824/p7pfn25s1l940bzetl2o.jpg",
     status: "approved", // Optional, set default status
+    isEmailVerified: true // Optional, set default email verification status
   });
 
   await superAdmin.save();
