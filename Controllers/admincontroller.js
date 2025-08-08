@@ -7,13 +7,13 @@ const Gym = require('../Modals/gym.js');
 require('dotenv').config();
 
 
-const cookieOptions = {
-    httpOnly: true,
-    secure: false, // Set to true if using HTTPS
-    sameSite: 'Lax',
-    // Adjust as needed
-
-};
+// Example in your login controller
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,      // must be true for cross-site cookies
+  sameSite: "none",  // must be 'none' for cross-site cookies
+  // optionally: maxAge: 24 * 60 * 60 * 1000 // 1 day
+});
 
 exports.superAdminLogin = async (req, res) => {
     try {
