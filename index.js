@@ -9,9 +9,20 @@ const connectDB = require('./DBConn/conn.js');
 
 connectDB(); // Connect to MongoDB
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://gym-8e43s0pu0-yogesh-awasthis-projects.vercel.app'
+];
+
 app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
+  origin: function(origin, callback){
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
 }));
 
 
