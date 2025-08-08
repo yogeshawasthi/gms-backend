@@ -10,6 +10,7 @@ router.post('/superadmin/login' , admincontroller.superAdminLogin);
 router.post('/superadmin/logout' ,auth, admincontroller.superAdminLogout);
 router.get('/superadmin/get-pending-gyms' ,auth, admincontroller.getPendingGyms);
 router.get('/superadmin/get-approved-gyms' ,auth, admincontroller.getApprovedGyms);
+router.get('/superadmin/get-pending-gyms' ,auth, admincontroller.getPendingGyms);
 router.post('/superadmin/change-status' ,auth, admincontroller.changeGymStatus);
 
 router.get('/verify-email', gymController.verifyEmail);
