@@ -126,9 +126,7 @@ exports.changeGymStatus = async (req, res) => {
                 return res.status(500).json({ error: "Failed to send the email. Status not updated. Try again." });
             }
         } else if (status === 'rejected') {
-            gym.status = 'rejected';
-            await gym.save();
-
+            // Send rejection email before deleting
             const mailOptions = {
                 from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
                 to: gym.email,
@@ -148,7 +146,10 @@ exports.changeGymStatus = async (req, res) => {
                 console.error("Failed to send rejection email:", emailErr);
             }
 
-            return res.json({ message: "Gym rejected and status updated", gym });
+            // Delete the gym from the database
+            await Gym.findByIdAndDelete(gymId);
+
+            return res.json({ message: "Gym rejected, email sent, and gym removed from database" });
         } else {
             return res.status(400).json({ error: "Invalid status value" });
         }
