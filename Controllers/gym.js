@@ -320,7 +320,7 @@ exports.sendVerificationEmail = async (req, res) => {
         await gym.save();
 
         // Send verification email
-        const verificationUrl = `${process.env.BACKEND_URL || "http://localhost:4000"}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+        const verificationUrl = `${process.env.BACKEND_URL || "https://gms-backend-u5x0.onrender.com"}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
         const mailOptions = {
             from: `"Gym Management System" <${process.env.SENDER_EMAIL}>`,
             to: email,
